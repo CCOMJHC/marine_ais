@@ -20,8 +20,9 @@ def nmeaCallback(msg):
     if msg.sentence.startswith('!AIVDM'):
         ais_decoder.addNMEA(msg.sentence)
         msgs = ais_decoder.popMessages()
-        receive_time = datetime.datetime.utcfromtimestamp(msg.header.stamp.to_sec())
+        receive_time = datetime.datetime.fromtimestamp(msg.header.stamp.to_sec(), datetime.UTC)
         for m in msgs:
+            debug = ''
             a = AIS()
             a.header = msg.header
             a.message_id = m['message_id']
@@ -67,8 +68,10 @@ def nmeaCallback(msg):
             if 'sog' in m and m['sog'] is not None and 'cog' in m and m['cog'] is not None:
                 sog_meters_per_second = m['sog']*0.514444
                 cog_ros = math.radians(90.0-m['cog'])
+                debug += 'sog: ' + str(m['sog']) + ' cog: ' + str(m['cog']) + ' cog_ros: ' + str(cog_ros)
                 a.navigation.twist.linear.x = math.cos(cog_ros)*sog_meters_per_second
                 a.navigation.twist.linear.y = math.sin(cog_ros)*sog_meters_per_second
+                debug += ' x: '+str(a.navigation.twist.linear.x) + ' y: '+str(a.navigation.twist.linear.y)
             else:
                 a.navigation.twist.linear.x = math.nan
                 a.navigation.twist.linear.y = math.nan
@@ -109,8 +112,8 @@ def nmeaCallback(msg):
             if 'imo_number' in m:
                 a.static_info.imo_number = m['imo_number']
             
-            if 'callsign' in m:
-                a.static_info.callsign = m['callsign']
+            if 'call_sign' in m:
+                a.static_info.callsign = m['call_sign']
             
             if 'name' in m:
                 a.static_info.name = m['name']
@@ -373,6 +376,9 @@ def nmeaCallback(msg):
             if 'utc_time' in m and m['utc_time'] is not None:
                 try:
                     a.utc_time = rospy.Time.from_sec(m['utc_time'].timestamp())
+                    if a.utc_time.secs > 4294967295:
+                        a.utc_time = rospy.Time()
+                        rospy.logerr('utc_time: '+ str(m['utc_time']))
                 except TypeError:
                     rospy.logerr('utc_time: '+ str(m['utc_time']))
 
@@ -386,11 +392,13 @@ def nmeaCallback(msg):
 
             if 'nmea_payload' in m:
                 a.nmea_payload = m['nmea_payload']
+            a.nmea_payload = debug
 
             try:
                 ais_pub.publish(a)
             except rospy.exceptions.ROSSerializationException as e:
-                rospy.logerr(str(e))
+                rospy.logerr("ROSSerializationException: "+ str(e))
+                rospy.logerr("Dict: "+str(m))
 
 nmea_sub = rospy.Subscriber('nmea', Sentence, nmeaCallback)            
 

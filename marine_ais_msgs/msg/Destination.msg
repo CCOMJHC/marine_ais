@@ -45,7 +45,7 @@ uint8 requested_message_id
 # To assign a reporting rate for a station, the parameter increment should be set to zero. The parameter offset should
 # then be interpreted as the number of reports in a time interval of 10 min.
 
-uint8 slot_offset
+uint16 slot_offset
 
 # message 16
 # Increment

@@ -1,0 +1,10 @@
+<launch>
+  <arg name="input_port"/>
+  <arg name="log_directory" default=""/>
+  <node pkg="marine_ais_tools" type="nmea_relay.py" name="aishub_relay">
+    <param name="input_type" value="tcp"/>
+    <param name="input_address" value="data.aishub.net"/>
+    <param name="input_port" value="$(arg input_port)"/>
+    <param name="log_directory" value="$(arg log_directory)"/>
+  </node>
+</launch>
