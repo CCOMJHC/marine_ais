@@ -20,7 +20,7 @@ def nmeaCallback(msg):
     if msg.sentence.startswith('!AIVDM'):
         ais_decoder.addNMEA(msg.sentence)
         msgs = ais_decoder.popMessages()
-        receive_time = datetime.datetime.fromtimestamp(msg.header.stamp.to_sec(), datetime.UTC)
+        receive_time = datetime.datetime.fromtimestamp(msg.header.stamp.to_sec(), datetime.timezone.utc)
         for m in msgs:
             debug = ''
             a = AIS()
